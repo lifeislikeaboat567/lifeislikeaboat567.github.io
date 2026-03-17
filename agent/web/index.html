@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenClaw Agent — 控制台</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ═══════════════════════════════════════════════════════════════ Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">🦀</span>
+        <span class="logo-text">OpenClaw</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-view="chat" href="#chat">
+        <span class="nav-icon">💬</span><span class="nav-label">对话</span>
+      </a>
+      <a class="nav-item" data-view="agents" href="#agents">
+        <span class="nav-icon">🤖</span><span class="nav-label">Agent 管理</span>
+      </a>
+      <a class="nav-item" data-view="skills" href="#skills">
+        <span class="nav-icon">🛠️</span><span class="nav-label">技能库</span>
+      </a>
+      <a class="nav-item" data-view="memory" href="#memory">
+        <span class="nav-icon">🧠</span><span class="nav-label">记忆系统</span>
+      </a>
+      <a class="nav-item" data-view="channels" href="#channels">
+        <span class="nav-icon">📡</span><span class="nav-label">渠道接入</span>
+      </a>
+      <a class="nav-item" data-view="security" href="#security">
+        <span class="nav-icon">🔒</span><span class="nav-label">安全日志</span>
+      </a>
+      <a class="nav-item" data-view="settings" href="#settings">
+        <span class="nav-icon">⚙️</span><span class="nav-label">系统配置</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="connection-status" id="connStatus">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">未连接</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════════════════════════════════ Main Panel -->
+  <main class="main" id="main">
+
+    <!-- ── Login overlay ── -->
+    <div class="overlay" id="loginOverlay">
+      <div class="login-card">
+        <div class="login-logo">🦀 <strong>OpenClaw</strong></div>
+        <p class="login-subtitle">AI Agent 控制台</p>
+        <div class="form-group">
+          <label for="loginUser">用户名</label>
+          <input type="text" id="loginUser" placeholder="admin" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="loginPass">密码</label>
+          <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="form-group">
+          <label for="gatewayUrl">Gateway URL</label>
+          <input type="text" id="gatewayUrl" value="ws://localhost:3000" />
+        </div>
+        <button class="btn btn-primary btn-full" id="loginBtn">连接并登录</button>
+        <p class="login-hint">演示模式：使用任意用户名/密码连接本地 Gateway</p>
+      </div>
+    </div>
+
+    <!-- ── View: Chat ── -->
+    <section class="view active" id="view-chat">
+      <div class="view-header">
+        <h1>💬 对话</h1>
+        <div class="header-actions">
+          <select id="agentSelect" class="select-sm">
+            <option value="auto">🤖 自动路由</option>
+          </select>
+          <button class="btn btn-sm btn-outline" id="clearChatBtn">清空对话</button>
+        </div>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-welcome">
+            <div class="welcome-icon">🦀</div>
+            <h2>欢迎使用 OpenClaw Agent</h2>
+            <p>我可以帮您执行文件操作、命令行任务、API调用等。请登录后开始对话。</p>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <div class="chat-input-wrapper">
+            <textarea
+              id="chatInput"
+              rows="1"
+              placeholder="输入指令… (Shift+Enter 换行，Enter 发送)"
+              disabled
+            ></textarea>
+            <button class="btn btn-send" id="sendBtn" disabled>
+              <span id="sendIcon">↑</span>
+            </button>
+          </div>
+          <div class="chat-hint">
+            支持：文件操作 · 命令执行 · API调用 · 网页抓取 · 记忆管理
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── View: Agents ── -->
+    <section class="view" id="view-agents">
+      <div class="view-header">
+        <h1>🤖 Agent 管理</h1>
+        <button class="btn btn-sm btn-primary" id="refreshAgentsBtn">刷新</button>
+      </div>
+      <div class="card-grid" id="agentCards">
+        <div class="info-card">
+          <div class="card-icon">🤖</div>
+          <h3>通用 Agent</h3>
+          <p>模型: GPT-4o</p>
+          <span class="badge badge-green">在线</span>
+        </div>
+        <div class="info-card">
+          <div class="card-icon">💻</div>
+          <h3>编程 Agent</h3>
+          <p>模型: GPT-4o</p>
+          <span class="badge badge-green">在线</span>
+        </div>
+        <div class="info-card">
+          <div class="card-icon">✍️</div>
+          <h3>写作 Agent</h3>
+          <p>模型: GPT-4o</p>
+          <span class="badge badge-green">在线</span>
+        </div>
+      </div>
+
+      <div class="section-title">路由规则</div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>关键词</th><th>目标 Agent</th><th>优先级</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>代码 / 编程 / debug</td><td>编程 Agent</td><td>高</td></tr>
+            <tr><td>写作 / 文章 / 报告</td><td>写作 Agent</td><td>高</td></tr>
+            <tr><td>（默认）</td><td>通用 Agent</td><td>低</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── View: Skills ── -->
+    <section class="view" id="view-skills">
+      <div class="view-header">
+        <h1>🛠️ 技能库</h1>
+        <button class="btn btn-sm btn-primary">+ 安装技能</button>
+      </div>
+      <div class="skills-grid" id="skillsGrid">
+        <!-- populated by JS -->
+      </div>
+    </section>
+
+    <!-- ── View: Memory ── -->
+    <section class="view" id="view-memory">
+      <div class="view-header">
+        <h1>🧠 记忆系统</h1>
+      </div>
+      <div class="memory-layout">
+        <div class="memory-panel">
+          <h2>⚡ 短期记忆 <span class="badge badge-blue" id="stmCount">0 条</span></h2>
+          <p class="panel-desc">当前会话上下文，会话结束后自动压缩摘要。</p>
+          <div class="memory-messages" id="stmMessages">
+            <div class="empty-state">暂无活跃会话</div>
+          </div>
+        </div>
+        <div class="memory-panel">
+          <h2>📚 长期记忆 <span class="badge badge-purple" id="ltmCount">0 条</span></h2>
+          <p class="panel-desc">跨会话持久化：偏好设置、知识库、任务历史。</p>
+          <div class="memory-tabs">
+            <button class="tab active" data-tab="facts">知识点</button>
+            <button class="tab" data-tab="prefs">偏好</button>
+            <button class="tab" data-tab="history">任务历史</button>
+          </div>
+          <div id="ltmContent">
+            <div class="empty-state">登录后查看长期记忆</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── View: Channels ── -->
+    <section class="view" id="view-channels">
+      <div class="view-header">
+        <h1>📡 渠道接入</h1>
+      </div>
+      <div class="card-grid">
+        <div class="channel-card">
+          <div class="channel-icon">🌐</div>
+          <h3>Web 控制台</h3>
+          <span class="badge badge-green">已启用</span>
+          <p>当前页面即 Web 控制界面，通过 WebSocket 连接 Gateway。</p>
+        </div>
+        <div class="channel-card">
+          <div class="channel-icon">✈️</div>
+          <h3>Telegram</h3>
+          <span class="badge badge-gray">未配置</span>
+          <p>需要 Bot Token。配置后支持 Telegram 消息收发。</p>
+          <input class="input-sm" placeholder="Bot Token" id="telegramToken" type="password" />
+          <button class="btn btn-sm btn-outline">保存配置</button>
+        </div>
+        <div class="channel-card">
+          <div class="channel-icon">💬</div>
+          <h3>Discord</h3>
+          <span class="badge badge-gray">未配置</span>
+          <p>需要 Bot Token。配置后支持 Discord 服务器集成。</p>
+        </div>
+        <div class="channel-card">
+          <div class="channel-icon">💼</div>
+          <h3>Slack</h3>
+          <span class="badge badge-gray">未配置</span>
+          <p>需要 OAuth Token 和 Signing Secret。</p>
+        </div>
+        <div class="channel-card">
+          <div class="channel-icon">🟢</div>
+          <h3>WhatsApp</h3>
+          <span class="badge badge-gray">未配置</span>
+          <p>通过 Twilio WhatsApp API 接入。</p>
+        </div>
+        <div class="channel-card">
+          <div class="channel-icon">🪶</div>
+          <h3>飞书 / 企业微信</h3>
+          <span class="badge badge-gray">未配置</span>
+          <p>支持飞书机器人和企业微信接入。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── View: Security ── -->
+    <section class="view" id="view-security">
+      <div class="view-header">
+        <h1>🔒 安全与审计</h1>
+        <button class="btn btn-sm btn-outline" id="refreshLogBtn">刷新日志</button>
+      </div>
+
+      <div class="security-stats" id="securityStats">
+        <div class="stat-card">
+          <div class="stat-value" id="statLogins">—</div>
+          <div class="stat-label">登录成功</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statFailed">—</div>
+          <div class="stat-label">登录失败</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statInjections">—</div>
+          <div class="stat-label">注入拦截</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statSkillExecs">—</div>
+          <div class="stat-label">技能执行</div>
+        </div>
+      </div>
+
+      <div class="section-title">审计日志</div>
+      <div class="log-viewer" id="auditLog">
+        <div class="log-line log-info">[系统] 审计日志存储于 ./logs/audit.jsonl。登录后实时查看。</div>
+      </div>
+    </section>
+
+    <!-- ── View: Settings ── -->
+    <section class="view" id="view-settings">
+      <div class="view-header">
+        <h1>⚙️ 系统配置</h1>
+        <button class="btn btn-sm btn-primary" id="saveSettingsBtn">保存配置</button>
+      </div>
+      <div class="settings-form">
+        <div class="settings-group">
+          <h2>🤖 LLM 配置</h2>
+          <div class="form-row">
+            <label>API 提供商</label>
+            <select id="llmProvider" class="select-sm">
+              <option>OpenAI</option>
+              <option>Anthropic</option>
+              <option>Azure OpenAI</option>
+              <option>本地 (Ollama)</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>API Key</label>
+            <input type="password" id="apiKey" placeholder="sk-..." />
+          </div>
+          <div class="form-row">
+            <label>默认模型</label>
+            <select id="defaultModel" class="select-sm">
+              <option>gpt-4o</option>
+              <option>gpt-4o-mini</option>
+              <option>claude-3-5-sonnet-latest</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h2>🔒 安全设置</h2>
+          <div class="form-row">
+            <label>沙箱模式</label>
+            <label class="toggle">
+              <input type="checkbox" id="sandboxMode" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>高危操作二次确认</label>
+            <label class="toggle">
+              <input type="checkbox" id="confirmHighRisk" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>最大迭代次数</label>
+            <input type="number" id="maxIterations" value="20" min="1" max="100" />
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h2>🧠 记忆配置</h2>
+          <div class="form-row">
+            <label>短期记忆最大消息数</label>
+            <input type="number" id="stmMax" value="50" min="10" max="200" />
+          </div>
+          <div class="form-row">
+            <label>保留最近消息数</label>
+            <input type="number" id="stmKeep" value="10" min="5" max="50" />
+          </div>
+          <div class="form-row">
+            <label>会话超时 (分钟)</label>
+            <input type="number" id="sessionTtl" value="60" min="5" max="1440" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Confirm Dialog ── -->
+  <div class="modal-overlay hidden" id="confirmModal">
+    <div class="modal-card">
+      <div class="modal-icon">⚠️</div>
+      <h3 id="confirmTitle">确认高危操作</h3>
+      <p id="confirmBody"></p>
+      <div class="modal-actions">
+        <button class="btn btn-outline" id="confirmCancel">取消</button>
+        <button class="btn btn-danger" id="confirmOk">确认执行</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
